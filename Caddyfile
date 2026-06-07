@@ -1,0 +1,31 @@
+{$DOMAIN:api.skinscan.in} {
+    # Automatic HTTPS via Let's Encrypt
+    
+    # Security headers
+    header {
+        Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        -Server
+    }
+
+    # Reverse proxy to the API container
+    reverse_proxy api:8000 {
+        header_up X-Forwarded-Proto {scheme}
+        header_up X-Real-IP {remote_host}
+        health_uri /healthz
+        health_interval 30s
+        health_timeout 5s
+    }
+
+    # Request size limit (12MB to account for multipart overhead)
+    request_body {
+        max_size 12MB
+    }
+
+    log {
+        output stdout
+        format json
+    }
+}
