@@ -16,7 +16,7 @@ class GeminiAnalyzer(SkinAnalyzer):
         except Exception as e:
             error_str = str(e)
             if "503" in error_str or "429" in error_str or "UNAVAILABLE" in error_str or "RESOURCE_EXHAUSTED" in error_str:
-                fallback_model = "gemini-1.5-flash"
+                fallback_model = "gemini-1.5-flash-latest"
                 import logging
                 logger = logging.getLogger("skinscan")
                 logger.warning(f"Primary model {settings.gemini_model} failed: {error_str}. Falling back to {fallback_model}.")
