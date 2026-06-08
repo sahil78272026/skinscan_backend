@@ -6,7 +6,7 @@
 set -euo pipefail
 
 echo "=== Pulling latest code ==="
-git pull origin main
+git pull origin master
 
 echo "=== Building and starting containers ==="
 docker compose up -d --build
