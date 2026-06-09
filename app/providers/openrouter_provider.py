@@ -44,27 +44,39 @@ class OpenRouterAnalyzer(SkinAnalyzer):
             "stream": False
         }
 
+        import asyncio
+        max_retries = 3
+        
         async with httpx.AsyncClient(timeout=90.0) as client:
-            response = await client.post(url, headers=headers, json=payload)
-            
-            if response.status_code != 200:
-                logger.error(f"OpenRouter API Error: {response.status_code} {response.text}")
-                raise Exception(f"OpenRouter API Error {response.status_code}: {response.text}")
+            for attempt in range(max_retries):
+                response = await client.post(url, headers=headers, json=payload)
                 
-            data = response.json()
-            content = data["choices"][0]["message"]["content"]
-            
-            # Clean conversational text and markdown by extracting from first { to last }
-            raw_text = content.strip()
-            start_idx = raw_text.find('{')
-            end_idx = raw_text.rfind('}')
-            
-            if start_idx != -1 and end_idx != -1:
-                raw_text = raw_text[start_idx:end_idx+1]
+                if response.status_code in [429, 502, 503, 504]:
+                    if attempt < max_retries - 1:
+                        logger.warning(f"OpenRouter rate limit/server error ({response.status_code}). Retrying in {2 ** attempt}s...")
+                        await asyncio.sleep(2 ** attempt)
+                        continue
+                    else:
+                        logger.error(f"OpenRouter API Error: {response.status_code} {response.text}")
+                        raise Exception(f"OpenRouter API Error {response.status_code}: {response.text}")
+                elif response.status_code != 200:
+                    logger.error(f"OpenRouter API Error: {response.status_code} {response.text}")
+                    raise Exception(f"OpenRouter API Error {response.status_code}: {response.text}")
+                    
+                data = response.json()
+                content = data["choices"][0]["message"]["content"]
                 
-            try:
-                result_dict = json.loads(raw_text.strip())
-                return AnalysisResult(**result_dict)
-            except json.JSONDecodeError as e:
-                logger.error(f"Failed to decode OpenRouter JSON. Raw output: {content}")
-                raise Exception(f"Invalid JSON from OpenRouter: {e}")
+                # Clean conversational text and markdown by extracting from first { to last }
+                raw_text = content.strip()
+                start_idx = raw_text.find('{')
+                end_idx = raw_text.rfind('}')
+                
+                if start_idx != -1 and end_idx != -1:
+                    raw_text = raw_text[start_idx:end_idx+1]
+                    
+                try:
+                    result_dict = json.loads(raw_text.strip())
+                    return AnalysisResult(**result_dict)
+                except json.JSONDecodeError as e:
+                    logger.error(f"Failed to decode OpenRouter JSON. Raw output: {content}")
+                    raise Exception(f"Invalid JSON from OpenRouter: {e}")
