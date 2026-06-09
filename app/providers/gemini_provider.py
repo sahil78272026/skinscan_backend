@@ -16,7 +16,7 @@ class GeminiAnalyzer(SkinAnalyzer):
         except Exception as e:
             error_str = str(e)
             if "503" in error_str or "429" in error_str or "UNAVAILABLE" in error_str or "RESOURCE_EXHAUSTED" in error_str:
-                fallback_model = "gemini-1.5-flash-latest"
+                fallback_model = settings.gemini_fallback_model
                 import logging
                 logger = logging.getLogger("skinscan")
                 logger.warning(f"Primary model {settings.gemini_model} failed: {error_str}. Falling back to {fallback_model}.")
@@ -32,11 +32,21 @@ class GeminiAnalyzer(SkinAnalyzer):
             ],
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
+                response_schema=AnalysisResult,
                 temperature=0.3
             )
         )
         
-        result_dict = json.loads(response.text)
+        # Clean potential markdown wrapping (e.g. ```json ... ```)
+        raw_text = response.text.strip()
+        if raw_text.startswith("```json"):
+            raw_text = raw_text[7:]
+        if raw_text.startswith("```"):
+            raw_text = raw_text[3:]
+        if raw_text.endswith("```"):
+            raw_text = raw_text[:-3]
+            
+        result_dict = json.loads(raw_text.strip())
         return AnalysisResult(**result_dict)
 
 # class ClaudeAnalyzer(SkinAnalyzer): ...

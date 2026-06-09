@@ -18,8 +18,8 @@ async def login_email(
     consent_photo: bool = Form(False),
     db: Session = Depends(get_db)
 ):
-    if not await verify_turnstile(turnstile_token):
-        raise BadRequestException("Invalid CAPTCHA")
+    # if not await verify_turnstile(turnstile_token):
+    #     raise BadRequestException("Invalid CAPTCHA")
         
     auth_svc = AuthService(db)
     user, token = auth_svc.process_email_login(email, consent_analysis, consent_photo)

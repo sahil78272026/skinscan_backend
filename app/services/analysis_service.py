@@ -4,6 +4,7 @@ from io import BytesIO
 from PIL import Image
 from datetime import datetime, timezone
 from sqlalchemy.orm import Session
+from fastapi import BackgroundTasks
 
 from app.schemas.analysis import AnalysisResult, AnalysisCreate, AnalysisOut
 from app.models.user import User
@@ -51,6 +52,7 @@ class AnalysisService:
         user: User, 
         file_bytes: bytes, 
         mime_type: str,
+        background_tasks: BackgroundTasks,
         age_range: str | None = None,
         primary_concern: str | None = None
     ) -> AnalysisOut:
@@ -89,9 +91,8 @@ class AnalysisService:
             )
             analysis_db = self.repo.create(self.db, analysis_in)
             
-            # 7. Email Report (non-blocking ideally, but await here for simplicity)
-            # In a real system, send to background task
-            await self.email_svc.send_report(user, sanitized_result)
+            # 7. Email Report
+            background_tasks.add_task(self.email_svc.send_report, user, sanitized_result)
             
             return AnalysisOut.model_validate(analysis_db)
             

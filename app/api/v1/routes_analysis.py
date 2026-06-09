@@ -1,11 +1,10 @@
-from fastapi import APIRouter, Depends, UploadFile, File, Form, Request
+from fastapi import APIRouter, Depends, UploadFile, File, Form, Request, BackgroundTasks
 from sqlalchemy.orm import Session
 from app.core.dependencies import get_current_user, get_db, get_analyzer, get_storage, get_email
 from app.models.user import User
 from app.schemas.analysis import AnalysisOut
 from app.schemas.response import Envelope, success_response
 from app.services.analysis_service import AnalysisService
-from app.services.turnstile import verify_turnstile
 from app.services.rate_limiter import check_rate_limit_email
 from app.providers.base_ai import SkinAnalyzer
 from app.providers.base_storage import StorageService
@@ -18,8 +17,8 @@ router = APIRouter()
 @router.post("/", response_model=Envelope[AnalysisOut])
 async def create_analysis(
     request: Request,
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
-    turnstile_token: str = Form(None),
     age_range: str = Form(None),
     primary_concern: str = Form(None),
     current_user: User = Depends(get_current_user),
@@ -28,10 +27,6 @@ async def create_analysis(
     storage: StorageService = Depends(get_storage),
     email_svc: EmailService = Depends(get_email)
 ):
-    # 1. CAPTCHA verification
-    if not await verify_turnstile(turnstile_token):
-        raise BadRequestException("Invalid CAPTCHA")
-
     # 2. Rate limit check
     check_rate_limit_email(db, current_user, settings.rate_limit_per_email_per_day)
 
@@ -51,7 +46,7 @@ async def create_analysis(
     # 5. Run analysis
     service = AnalysisService(analyzer, storage, email_svc, db)
     analysis_out = await service.orchestrate_analysis(
-        current_user, file_bytes, file.content_type or "image/jpeg", age_range, primary_concern
+        current_user, file_bytes, file.content_type or "image/jpeg", background_tasks, age_range, primary_concern
     )
 
     return success_response(analysis_out)

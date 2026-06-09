@@ -20,7 +20,12 @@ class Settings(BaseSettings):
     # ── AI Provider ──────────────────────────────────────────
     ai_provider: str = "gemini"
     gemini_api_key: str = ""
-    gemini_model: str = "gemini-2.5-flash"
+    gemini_model: str = ""
+    gemini_fallback_model: str = ""
+    nvidia_api_key: str = ""
+    nvidia_model: str = "meta/llama-3.2-90b-vision-instruct"
+    openrouter_api_key: str = ""
+    openrouter_model: str = "moonshotai/kimi-k2.6:free"
 
     # ── Object Storage (S3 / R2) ─────────────────────────────
     storage_provider: str = "s3"
@@ -120,7 +125,7 @@ def run_startup_checks(s: Settings) -> None:
     logger.info(f"  Environment   : {s.app_env}")
     logger.info(f"  Frontend CORS : {s.frontend_origin}")
     logger.info(f"  Database      : {'✓ configured' if s.database_url else '✗ MISSING'}")
-    logger.info(f"  AI Provider   : {s.ai_provider} — {'✓ key present' if s.gemini_api_key else '✗ key missing'}")
+    logger.info(f"  AI Provider   : {s.ai_provider} — {'✓ key present' if s.openrouter_api_key else '✗ key missing'}")
     logger.info(f"  Object Storage: {'✓ configured' if s.storage_configured else '○ not configured (photo save disabled)'}")
     logger.info(f"  Email (Resend): {'✓ configured' if s.email_configured else '○ not configured (emails disabled)'}")
     logger.info(f"  Turnstile     : {'✓ configured' if s.turnstile_configured else '○ not configured (CAPTCHA bypassed)'}")
