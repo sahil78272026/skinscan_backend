@@ -66,6 +66,15 @@ class OpenRouterAnalyzer(SkinAnalyzer):
                 data = response.json()
                 content = data["choices"][0]["message"]["content"]
                 
+                # Intercept broken model responses like "User Safety: safe"
+                if "User Safety: safe" in content or "I don't feel safe" in content:
+                    if attempt < max_retries - 1:
+                        logger.warning(f"OpenRouter routed to a broken/over-filtered model (Raw: {content}). Retrying...")
+                        await asyncio.sleep(2 ** attempt)
+                        continue
+                    else:
+                        raise Exception(f"Failed to bypass upstream model guardrails. Raw: {content}")
+                
                 # Clean conversational text and markdown by extracting from first { to last }
                 raw_text = content.strip()
                 start_idx = raw_text.find('{')
@@ -78,5 +87,10 @@ class OpenRouterAnalyzer(SkinAnalyzer):
                     result_dict = json.loads(raw_text.strip())
                     return AnalysisResult(**result_dict)
                 except json.JSONDecodeError as e:
-                    logger.error(f"Failed to decode OpenRouter JSON. Raw output: {content}")
-                    raise Exception(f"Invalid JSON from OpenRouter: {e}")
+                    if attempt < max_retries - 1:
+                        logger.warning(f"Failed to decode OpenRouter JSON on attempt {attempt + 1}. Retrying...")
+                        await asyncio.sleep(2 ** attempt)
+                        continue
+                    else:
+                        logger.error(f"Failed to decode OpenRouter JSON permanently. Raw output: {content}")
+                        raise Exception(f"Invalid JSON from OpenRouter: {e}")
