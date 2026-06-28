@@ -126,6 +126,7 @@ def run_startup_checks(s: Settings) -> None:
     logger.info(f"  Frontend CORS : {s.frontend_origin}")
     logger.info(f"  Database      : {'✓ configured' if s.database_url else '✗ MISSING'}")
     logger.info(f"  AI Provider   : {s.ai_provider} — {'✓ key present' if s.openrouter_api_key else '✗ key missing'}")
+    logger.info(f"  Model         : {s.openrouter_model}")
     logger.info(f"  Object Storage: {'✓ configured' if s.storage_configured else '○ not configured (photo save disabled)'}")
     logger.info(f"  Email (Resend): {'✓ configured' if s.email_configured else '○ not configured (emails disabled)'}")
     logger.info(f"  Turnstile     : {'✓ configured' if s.turnstile_configured else '○ not configured (CAPTCHA bypassed)'}")
