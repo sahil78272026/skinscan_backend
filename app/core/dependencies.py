@@ -43,6 +43,21 @@ def get_current_user(
         
     return user
 
+def get_optional_user(
+    token: str = Depends(oauth2_scheme), 
+    db: Session = Depends(get_db)
+):
+    if not token:
+        return None
+    try:
+        user_id = decode_access_token(token)
+        if not user_id:
+            return None
+        user_repo = UserRepository()
+        return user_repo.get_by_id(db, user_id)
+    except:
+        return None
+
 def get_analyzer() -> SkinAnalyzer:
     if settings.ai_provider == "openrouter":
         return OpenRouterAnalyzer()

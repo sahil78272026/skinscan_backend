@@ -8,7 +8,7 @@ Backend for SkinScan application.
 2. `python3 -m venv venv && source venv/bin/activate`
 3. `pip install -r requirements.txt`
 4. `alembic upgrade head`
-5. `uvicorn app.main:app --reload`
+5. `uvicorn app.main:app --reload` or uvicorn app.main:app --host 0.0.0.0 --reload
 
 ## Deploy
 

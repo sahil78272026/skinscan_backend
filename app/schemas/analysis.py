@@ -31,7 +31,8 @@ class AnalysisResult(BaseModel):
     encouragement_note: Optional[str] = None
 
 class AnalysisCreate(BaseModel):
-    user_id: UUID
+    user_id: Optional[UUID] = None
+    ip_address: Optional[str] = None
     skin_type: Optional[str]
     skin_tone: Optional[str]
     result_json: dict

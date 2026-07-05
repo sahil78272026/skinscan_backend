@@ -49,10 +49,11 @@ class AnalysisService:
 
     async def orchestrate_analysis(
         self, 
-        user: User, 
+        user: User | None, 
         file_bytes: bytes, 
         mime_type: str,
         background_tasks: BackgroundTasks,
+        ip_address: str,
         age_range: str | None = None,
         primary_concern: str | None = None
     ) -> AnalysisOut:
@@ -62,7 +63,7 @@ class AnalysisService:
         
         photo_key = None
         # 2. If photo consent, upload
-        if user.consent_photo_storage:
+        if user and user.consent_photo_storage:
             photo_key = f"analyses/{user.id}/{uuid.uuid4()}.jpg"
             await self.storage.upload(compressed_bytes, photo_key, "image/jpeg")
 
@@ -79,7 +80,8 @@ class AnalysisService:
             
             # 6. Persist
             analysis_in = AnalysisCreate(
-                user_id=user.id,
+                user_id=user.id if user else None,
+                ip_address=ip_address,
                 skin_type=sanitized_result.skin_type,
                 skin_tone=sanitized_result.skin_tone,
                 result_json=sanitized_result.model_dump(),
@@ -92,7 +94,8 @@ class AnalysisService:
             analysis_db = self.repo.create(self.db, analysis_in)
             
             # 7. Email Report
-            background_tasks.add_task(self.email_svc.send_report, user, sanitized_result)
+            if user:
+                background_tasks.add_task(self.email_svc.send_report, user, sanitized_result)
             
             return AnalysisOut.model_validate(analysis_db)
             
