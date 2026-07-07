@@ -107,3 +107,49 @@ async def claim_analysis(
         background_tasks.add_task(email_svc.send_report, user, sanitized_result)
         
     return success_response({"access_token": token, "message": "Report claimed and emailed successfully"})
+
+@router.post("/claim/google", response_model=Envelope[dict])
+async def claim_analysis_google(
+    background_tasks: BackgroundTasks,
+    job_id: uuid.UUID = Form(...),
+    credential: str = Form(...),
+    consent_analysis: bool = Form(False),
+    consent_photo: bool = Form(False),
+    db: Session = Depends(get_db),
+    email_svc: EmailService = Depends(get_email),
+    storage: StorageService = Depends(get_storage)
+):
+    from app.services.auth_service import AuthService
+    from app.repositories.analysis_repository import AnalysisRepository
+    from app.schemas.analysis import AnalysisResult
+
+    # 1. Verify Google token and login/create user
+    auth_svc = AuthService(db)
+    client_id = settings.google_oauth_client_id
+    if not client_id:
+        raise BadRequestException("Google login is not configured on the server")
+        
+    user, token = auth_svc.process_google_login(credential, client_id, consent_analysis, consent_photo)
+    
+    # 2. Claim analysis
+    repo = AnalysisRepository()
+    job = repo.get_by_id(db, job_id)
+    if not job:
+        raise BadRequestException("Analysis not found")
+        
+    if job.user_id and job.user_id != user.id:
+        raise BadRequestException("Analysis already claimed")
+        
+    if not job.user_id:
+        job.user_id = user.id
+        if not consent_photo and job.photo_object_key:
+            background_tasks.add_task(storage.delete, job.photo_object_key)
+            job.photo_object_key = None
+        db.commit()
+    
+    # 3. Email report
+    if job.result_json:
+        sanitized_result = AnalysisResult(**job.result_json)
+        background_tasks.add_task(email_svc.send_report, user, sanitized_result)
+        
+    return success_response({"access_token": token, "message": "Report claimed via Google and emailed successfully"})

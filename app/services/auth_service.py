@@ -30,3 +30,15 @@ class AuthService:
 
         token = create_access_token(subject=str(user.id))
         return user, token
+
+    def process_google_login(self, token: str, client_id: str, consent_analysis: bool, consent_photo: bool) -> tuple[User, str]:
+        from google.oauth2 import id_token
+        from google.auth.transport import requests
+        from app.core.exceptions import BadRequestException
+        
+        try:
+            idinfo = id_token.verify_oauth2_token(token, requests.Request(), client_id)
+            email = idinfo['email']
+            return self.process_email_login(email, consent_analysis, consent_photo)
+        except ValueError:
+            raise BadRequestException("Invalid Google token")
