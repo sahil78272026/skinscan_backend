@@ -23,6 +23,7 @@ async def create_analysis(
     file: UploadFile = File(...),
     age_range: str | None = Form(None),
     primary_concern: str | None = Form(None),
+    consent_photo: bool = Form(False),
     current_user: User | None = Depends(get_optional_user),
     db: Session = Depends(get_db),
     analyzer: SkinAnalyzer = Depends(get_analyzer),
@@ -60,7 +61,7 @@ async def create_analysis(
     # 5. Run analysis
     service = AnalysisService(analyzer, storage, email_svc, db)
     analysis_out = await service.orchestrate_analysis(
-        current_user, file_bytes, file.content_type or "image/jpeg", background_tasks, client_ip, age_range, primary_concern
+        current_user, file_bytes, file.content_type or "image/jpeg", background_tasks, client_ip, age_range, primary_concern, consent_photo
     )
 
     return success_response(analysis_out)
@@ -153,3 +154,54 @@ async def claim_analysis_google(
         background_tasks.add_task(email_svc.send_report, user, sanitized_result)
         
     return success_response({"access_token": token, "message": "Report claimed via Google and emailed successfully"})
+
+@router.get("/history", response_model=Envelope[list[AnalysisOut]])
+async def get_analysis_history(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    storage: StorageService = Depends(get_storage)
+):
+    from app.repositories.analysis_repository import AnalysisRepository
+    repo = AnalysisRepository()
+    analyses = repo.get_by_user(db, current_user.id)
+    
+    # Sort by created_at descending (newest first)
+    analyses.sort(key=lambda x: x.created_at, reverse=True)
+    
+    results = []
+    for a in analyses:
+        # Pydantic v1 vs v2 compatibility
+        out = AnalysisOut.from_orm(a) if hasattr(AnalysisOut, "from_orm") else AnalysisOut.model_validate(a)
+        if a.photo_object_key:
+            out.photo_url = await storage.signed_url(a.photo_object_key)
+        results.append(out)
+    
+    return success_response(results)
+
+@router.post("/{job_id}/email", response_model=Envelope[dict])
+async def email_analysis(
+    job_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    background_tasks: BackgroundTasks = BackgroundTasks()
+):
+    from app.repositories.analysis_repository import AnalysisRepository
+    from app.core.dependencies import get_email
+    from app.schemas.analysis import AnalysisResult
+    
+    repo = AnalysisRepository()
+    job = repo.get_by_id(db, job_id)
+    if not job:
+        return error_response("Analysis not found", 404)
+        
+    if str(job.user_id) != str(current_user.id):
+        return error_response("Not authorized to access this analysis", 403)
+        
+    if not job.result_json:
+        return error_response("Analysis incomplete", 400)
+        
+    email_svc = get_email()
+    sanitized_result = AnalysisResult(**job.result_json)
+    background_tasks.add_task(email_svc.send_report, current_user, sanitized_result)
+    
+    return success_response({"message": "Email queued successfully"})

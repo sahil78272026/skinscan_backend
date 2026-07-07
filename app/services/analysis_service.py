@@ -55,17 +55,28 @@ class AnalysisService:
         background_tasks: BackgroundTasks,
         ip_address: str,
         age_range: str | None = None,
-        primary_concern: str | None = None
+        primary_concern: str | None = None,
+        consent_photo: bool = False
     ) -> AnalysisOut:
         
         # 1. Compress image
         compressed_bytes = compress_image(file_bytes)
         
-        photo_key = None
-        # 2. If photo consent, upload
-        if user and user.consent_photo_storage:
-            photo_key = f"analyses/{user.id}/{uuid.uuid4()}.jpg"
-            await self.storage.upload(compressed_bytes, photo_key, "image/jpeg")
+        # 2. Upload photo (always upload so it can be claimed later)
+        prefix = f"analyses/{user.id}" if user else "analyses/anonymous"
+        photo_key = f"{prefix}/{uuid.uuid4()}.jpg"
+        await self.storage.upload(compressed_bytes, photo_key, "image/jpeg")
+        
+        # If logged-in user explicitly opted out previously, OR current consent_photo is False, we'll delete it later or don't set it
+        # Actually, let's respect the current consent_photo flag first, fallback to user.consent_photo_storage if user exists and consent_photo is somehow not provided (though it defaults to False).
+        final_consent_photo = consent_photo
+        if user and not final_consent_photo:
+            # Let's say if it's False from UI but True in DB, we trust UI for this specific pic
+            pass
+
+        if not final_consent_photo:
+            await self.storage.delete(photo_key)
+            photo_key = None
 
         try:
             # 3. Analyze with AI
@@ -89,7 +100,9 @@ class AnalysisService:
                 age_range=age_range,
                 primary_concern=primary_concern,
                 photo_object_key=photo_key,
-                ai_provider=settings.ai_provider
+                ai_provider=settings.ai_provider,
+                consent_photo=final_consent_photo,
+                consent_photo_given_at=datetime.now(timezone.utc) if final_consent_photo else None
             )
             analysis_db = self.repo.create(self.db, analysis_in)
             

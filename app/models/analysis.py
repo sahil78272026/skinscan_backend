@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, DateTime, ForeignKey, func, Text
+from sqlalchemy import Column, String, DateTime, ForeignKey, func, Text, Boolean
 from sqlalchemy.dialects.postgresql import UUID, JSONB, ARRAY
 from sqlalchemy.orm import relationship
 from app.db.base import Base
@@ -24,5 +24,8 @@ class Analysis(Base):
     
     photo_object_key = Column(String, nullable=True)
     ai_provider = Column(String, nullable=False)
+    
+    consent_photo = Column(Boolean, nullable=True)
+    consent_photo_given_at = Column(DateTime(timezone=True), nullable=True)
 
     user = relationship("User", backref="analyses")

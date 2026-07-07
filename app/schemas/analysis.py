@@ -43,6 +43,8 @@ class AnalysisCreate(BaseModel):
     region_state: Optional[str] = None
     photo_object_key: Optional[str] = None
     ai_provider: str
+    consent_photo: Optional[bool] = None
+    consent_photo_given_at: Optional[datetime] = None
 
 class AnalysisOut(BaseModel):
     id: UUID
@@ -51,7 +53,11 @@ class AnalysisOut(BaseModel):
     skin_tone: Optional[str]
     result_json: dict
     top_concerns: List[str]
-    photo_object_key: Optional[str]
+    photo_object_key: Optional[str] = None
+    photo_url: Optional[str] = None
+    user_id: Optional[UUID] = None
+    consent_photo: Optional[bool] = None
+    consent_photo_given_at: Optional[datetime] = None
     
     class Config:
         from_attributes = True
