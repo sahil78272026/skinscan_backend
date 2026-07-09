@@ -83,7 +83,7 @@ async def claim_analysis(
 
     # 1. Login or create user
     auth_svc = AuthService(db)
-    user, token = auth_svc.process_email_login(email, consent_analysis, consent_photo)
+    user, token = auth_svc.process_email_login(email, consent_analysis)
     
     # 2. Claim analysis
     repo = AnalysisRepository()
@@ -130,7 +130,7 @@ async def claim_analysis_google(
     if not client_id:
         raise BadRequestException("Google login is not configured on the server")
         
-    user, token = auth_svc.process_google_login(credential, client_id, consent_analysis, consent_photo)
+    user, token = auth_svc.process_google_login(credential, client_id, consent_analysis)
     
     # 2. Claim analysis
     repo = AnalysisRepository()

@@ -17,7 +17,9 @@ class AnalysisRepository:
             region_country=obj_in.region_country,
             region_state=obj_in.region_state,
             photo_object_key=obj_in.photo_object_key,
-            ai_provider=obj_in.ai_provider
+            ai_provider=obj_in.ai_provider,
+            consent_photo=obj_in.consent_photo,
+            consent_photo_given_at=obj_in.consent_photo_given_at
         )
         db.add(analysis)
         db.commit()

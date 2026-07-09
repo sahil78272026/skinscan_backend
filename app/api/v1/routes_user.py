@@ -10,7 +10,7 @@ from app.providers.base_storage import StorageService
 
 router = APIRouter()
 
-@router.get("/me", response_model=Envelope[UserOut])
+@router.get("/users/me", response_model=Envelope[UserOut])
 async def get_me(current_user: User = Depends(get_current_user)):
     return success_response(UserOut.model_validate(current_user))
 

@@ -16,6 +16,3 @@ class User(Base):
     
     consent_analysis = Column(Boolean, default=False)
     consent_analysis_at = Column(DateTime(timezone=True), nullable=True)
-    
-    consent_photo_storage = Column(Boolean, default=False)
-    consent_photo_storage_at = Column(DateTime(timezone=True), nullable=True)

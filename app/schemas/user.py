@@ -7,8 +7,6 @@ class UserBase(BaseModel):
     email: EmailStr
     display_name: Optional[str] = None
     consent_analysis: bool = False
-    consent_photo_storage: bool = False
-
 class UserCreate(UserBase):
     google_id: Optional[str] = None
 

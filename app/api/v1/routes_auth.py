@@ -15,13 +15,27 @@ async def login_email(
     email: str = Form(...),
     turnstile_token: str = Form(None),
     consent_analysis: bool = Form(False),
-    consent_photo: bool = Form(False),
     db: Session = Depends(get_db)
 ):
     # if not await verify_turnstile(turnstile_token):
     #     raise BadRequestException("Invalid CAPTCHA")
         
     auth_svc = AuthService(db)
-    user, token = auth_svc.process_email_login(email, consent_analysis, consent_photo)
+    user, token = auth_svc.process_email_login(email, consent_analysis)
     
+    return success_response({"access_token": token, "token_type": "bearer"})
+
+@router.post("/google", response_model=Envelope[dict[str, Any]])
+async def login_google(
+    credential: str = Form(...),
+    consent_analysis: bool = Form(False),
+    db: Session = Depends(get_db)
+):
+    from app.config import settings
+    auth_svc = AuthService(db)
+    client_id = settings.google_oauth_client_id
+    if not client_id:
+        raise BadRequestException("Google login is not configured on the server")
+        
+    user, token = auth_svc.process_google_login(credential, client_id, consent_analysis)
     return success_response({"access_token": token, "token_type": "bearer"})
