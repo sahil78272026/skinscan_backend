@@ -33,6 +33,24 @@ def compress_image(file_bytes: bytes) -> bytes:
         logger.error(f"Failed to compress image: {e}")
         raise BadRequestException("Invalid image file")
 
+def calculate_skin_score(sanitized_result: AnalysisResult) -> int:
+    score = 100
+    if not sanitized_result.zones:
+        return score
+    
+    for zone, observation in sanitized_result.zones.model_dump().items():
+        if not observation:
+            continue
+        severity = observation.get("severity", "").lower()
+        if severity == "severe":
+            score -= 15
+        elif severity == "moderate":
+            score -= 8
+        elif severity == "mild":
+            score -= 3
+            
+    return max(0, score)
+
 class AnalysisService:
     def __init__(
         self, 
@@ -89,6 +107,8 @@ class AnalysisService:
             # 5. Sanitize
             sanitized_result = sanitize_analysis(ai_result)
             
+            overall_score = calculate_skin_score(sanitized_result)
+            
             # 6. Persist
             analysis_in = AnalysisCreate(
                 user_id=user.id if user else None,
@@ -102,7 +122,8 @@ class AnalysisService:
                 photo_object_key=photo_key,
                 ai_provider=settings.ai_provider,
                 consent_photo=final_consent_photo,
-                consent_photo_given_at=datetime.now(timezone.utc) if final_consent_photo else None
+                consent_photo_given_at=datetime.now(timezone.utc) if final_consent_photo else None,
+                overall_score=overall_score
             )
             analysis_db = self.repo.create(self.db, analysis_in)
             

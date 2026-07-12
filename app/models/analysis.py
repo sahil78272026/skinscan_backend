@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, DateTime, ForeignKey, func, Text, Boolean
+from sqlalchemy import Column, String, DateTime, ForeignKey, func, Text, Boolean, Integer
 from sqlalchemy.dialects.postgresql import UUID, JSONB, ARRAY
 from sqlalchemy.orm import relationship
 from app.db.base import Base
@@ -23,6 +23,7 @@ class Analysis(Base):
     primary_concern = Column(String, nullable=True)
     region_country = Column(String, nullable=True)
     region_state = Column(String, nullable=True)
+    overall_score = Column(Integer, nullable=True, default=100)
     
     photo_object_key = Column(String, nullable=True)
     ai_provider = Column(String, nullable=False)

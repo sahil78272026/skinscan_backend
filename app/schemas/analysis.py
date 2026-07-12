@@ -45,6 +45,7 @@ class AnalysisCreate(BaseModel):
     ai_provider: str
     consent_photo: Optional[bool] = None
     consent_photo_given_at: Optional[datetime] = None
+    overall_score: Optional[int] = None
 
 class AnalysisOut(BaseModel):
     id: UUID
@@ -58,6 +59,7 @@ class AnalysisOut(BaseModel):
     user_id: Optional[UUID] = None
     consent_photo: Optional[bool] = None
     consent_photo_given_at: Optional[datetime] = None
+    overall_score: Optional[int] = None
     
     class Config:
         from_attributes = True

@@ -19,7 +19,8 @@ class AnalysisRepository:
             photo_object_key=obj_in.photo_object_key,
             ai_provider=obj_in.ai_provider,
             consent_photo=obj_in.consent_photo,
-            consent_photo_given_at=obj_in.consent_photo_given_at
+            consent_photo_given_at=obj_in.consent_photo_given_at,
+            overall_score=obj_in.overall_score
         )
         db.add(analysis)
         db.commit()
