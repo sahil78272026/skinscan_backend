@@ -12,7 +12,7 @@ echo "🚀 Starting deployment process..."
 
 # 1. Pull the latest code from the current branch
 echo "📦 Pulling latest code from git..."
-git pull
+git pull https://github.com/sahil78272026/skinscan_backend.git main
 
 # 2. Build and restart Docker containers in detached mode
 echo "🐳 Rebuilding and restarting Docker containers..."
