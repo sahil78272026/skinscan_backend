@@ -43,6 +43,12 @@ jobs:
     - name: Run Alembic Migrations
       env:
         DATABASE_URL: postgresql://testuser:testpassword@localhost:5432/skinscan_test
+        JWT_SECRET: "test_secret_do_not_use_in_prod"
+        JWT_ALGORITHM: "HS256"
+        TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA"
+        SUPABASE_URL: "https://test.supabase.co"
+        SUPABASE_KEY: "test"
+        GEMINI_API_KEY: "test"
       run: |
         alembic upgrade head
 
