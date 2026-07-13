@@ -17,3 +17,5 @@ pillow
 httpx
 authlib
 itsdangerous
+pytest
+pytest-asyncio
