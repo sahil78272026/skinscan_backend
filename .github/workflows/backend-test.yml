@@ -62,4 +62,4 @@ jobs:
         SUPABASE_KEY: "test"
         GEMINI_API_KEY: "test"
       run: |
-        pytest tests/ -v
+        PYTHONPATH=. pytest tests/ -v
