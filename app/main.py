@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
-from app.api.v1 import routes_analysis, routes_auth, routes_user, routes_waitlist
+from app.api.v1 import routes_analysis, routes_auth, routes_user, routes_waitlist, routes_analytics
 from app.config import settings, run_startup_checks
 from app.db.session import SessionLocal
 from app.core.exceptions import (
@@ -113,6 +113,7 @@ app.include_router(routes_auth.router, prefix="/api/v1/auth", tags=["auth"])
 app.include_router(routes_user.router, prefix="/api/v1", tags=["user"])
 app.include_router(routes_analysis.router, prefix="/api/v1/analyze", tags=["analyze"])
 app.include_router(routes_waitlist.router, prefix="/api/v1/waitlist", tags=["waitlist"])
+app.include_router(routes_analytics.router, prefix="/api/v1/analytics", tags=["analytics"])
 
 
 # ── Health check (verifies DB connectivity) ──────────────────
