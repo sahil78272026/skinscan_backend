@@ -37,13 +37,29 @@ async def create_analysis(
         if not is_human:
             raise BadRequestException("Security check failed (Turnstile)")
 
-    # 2. Rate limit check
+    # 2. Rate limit and Paywall check
     client_ip = request.headers.get("x-real-ip") or request.client.host or "127.0.0.1"
+    
     if current_user:
         check_rate_limit_email(db, current_user, settings.rate_limit_per_email_per_day)
+        if current_user.subscription_tier == "free":
+            if current_user.scans_used >= 3:
+                raise BadRequestException("Out of free scans! Please upgrade to Premium to continue.")
+            # Increment scans used
+            current_user.scans_used += 1
+            db.commit()
     else:
         from app.services.rate_limiter import check_rate_limit_ip
+        from app.models.analysis import Analysis
         check_rate_limit_ip(db, client_ip, settings.rate_limit_per_ip_per_day)
+        
+        # Paywall: Only 1 free scan per IP
+        anon_scans_count = db.query(Analysis).filter(
+            Analysis.ip_address == client_ip,
+            Analysis.user_id.is_(None)
+        ).count()
+        if anon_scans_count >= 1:
+            raise BadRequestException("Free scan used! Please sign up to unlock 3 more free scans.")
 
     # 3. Read and validate file size
     file_bytes = await file.read()
@@ -100,6 +116,9 @@ async def claim_analysis(
         if not consent_photo and job.photo_object_key:
             background_tasks.add_task(storage.delete, job.photo_object_key)
             job.photo_object_key = None
+            
+        # Deduct a scan from the user's free tier since they are claiming this one
+        user.scans_used += 1
         db.commit()
     
     # 3. Email report
@@ -146,6 +165,9 @@ async def claim_analysis_google(
         if not consent_photo and job.photo_object_key:
             background_tasks.add_task(storage.delete, job.photo_object_key)
             job.photo_object_key = None
+            
+        # Deduct a scan from the user's free tier since they are claiming this one
+        user.scans_used += 1
         db.commit()
     
     # 3. Email report

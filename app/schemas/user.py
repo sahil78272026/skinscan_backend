@@ -14,6 +14,8 @@ class UserOut(UserBase):
     id: UUID
     created_at: datetime
     last_active_at: Optional[datetime] = None
+    subscription_tier: str
+    scans_used: int
 
     class Config:
         from_attributes = True

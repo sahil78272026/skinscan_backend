@@ -54,6 +54,11 @@ class Settings(BaseSettings):
     # ── Turnstile CAPTCHA ────────────────────────────────────
     turnstile_secret_key: str = ""
 
+    # ── Razorpay Payments ────────────────────────────────────
+    razorpay_key_id: str = ""
+    razorpay_key_secret: str = ""
+    razorpay_webhook_secret: str = ""
+
     # ── Rate Limiting ────────────────────────────────────────
     rate_limit_per_email_per_day: int = 30
     rate_limit_per_ip_per_day: int = 10
