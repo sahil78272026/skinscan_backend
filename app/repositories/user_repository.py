@@ -16,8 +16,7 @@ class UserRepository:
             email=user_in.email,
             display_name=user_in.display_name,
             google_id=user_in.google_id,
-            consent_analysis=user_in.consent_analysis,
-            consent_photo_storage=user_in.consent_photo_storage
+            consent_analysis=user_in.consent_analysis
         )
         db.add(user)
         db.commit()

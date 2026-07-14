@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Boolean, DateTime, func
+from sqlalchemy import Column, String, Boolean, DateTime, func, Integer
 from sqlalchemy.dialects.postgresql import UUID
 from app.db.base import Base
 
@@ -16,3 +16,6 @@ class User(Base):
     
     consent_analysis = Column(Boolean, default=False)
     consent_analysis_at = Column(DateTime(timezone=True), nullable=True)
+
+    subscription_tier = Column(String, default="free", nullable=False)
+    scans_used = Column(Integer, default=0, nullable=False)
