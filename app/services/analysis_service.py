@@ -12,6 +12,7 @@ from app.providers.base_ai import SkinAnalyzer
 from app.providers.base_storage import StorageService
 from app.providers.base_email import EmailService
 from app.services.sanitizer import sanitize_analysis
+from app.services.product_recommender import get_recommendations_for_concerns
 from app.repositories.analysis_repository import AnalysisRepository
 from app.core.exceptions import BadRequestException
 from app.config import settings
@@ -106,6 +107,10 @@ class AnalysisService:
                 
             # 5. Sanitize
             sanitized_result = sanitize_analysis(ai_result)
+            
+            # 5.5 Inject Recommended Products
+            recommended = get_recommendations_for_concerns(sanitized_result.top_concerns)
+            sanitized_result.recommended_products = recommended
             
             overall_score = calculate_skin_score(sanitized_result)
             

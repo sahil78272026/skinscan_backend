@@ -29,6 +29,7 @@ class AnalysisResult(BaseModel):
     routine: Optional[Routine] = None
     lifestyle_nudges: List[str] = Field(default_factory=list)
     encouragement_note: Optional[str] = None
+    recommended_products: List[dict] = Field(default_factory=list)
 
 class AnalysisCreate(BaseModel):
     user_id: Optional[UUID] = None
