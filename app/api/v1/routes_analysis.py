@@ -41,13 +41,20 @@ async def create_analysis(
     client_ip = request.headers.get("x-real-ip") or request.client.host or "127.0.0.1"
     
     if current_user:
-        check_rate_limit_email(db, current_user, settings.rate_limit_per_email_per_day)
         if current_user.subscription_tier == "free":
+            check_rate_limit_email(db, current_user, settings.rate_limit_per_email_per_day)
             if current_user.scans_used >= 3:
                 raise BadRequestException("Out of free scans! Please upgrade to Premium to continue.")
             # Increment scans used
             current_user.scans_used += 1
             db.commit()
+        else:
+            # Premium users are subject to a Fair Use Policy (FUP) rate limit
+            from app.core.exceptions import RateLimitException
+            try:
+                check_rate_limit_email(db, current_user, settings.premium_rate_limit_per_email_per_day)
+            except RateLimitException:
+                raise BadRequestException("You have reached the Fair Use Policy limit of 7 scans per day for premium users. Please try again tomorrow.")
     else:
         from app.services.rate_limiter import check_rate_limit_ip
         from app.models.analysis import Analysis

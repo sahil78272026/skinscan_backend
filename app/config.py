@@ -61,6 +61,7 @@ class Settings(BaseSettings):
 
     # ── Rate Limiting ────────────────────────────────────────
     rate_limit_per_email_per_day: int = 30
+    premium_rate_limit_per_email_per_day: int = 7 # Fair Use Policy for Premium
     rate_limit_per_ip_per_day: int = 10
 
     # ── Data Retention ───────────────────────────────────────

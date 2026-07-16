@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ConfigDict
 from typing import Optional
 from datetime import datetime
 from uuid import UUID
@@ -17,8 +17,7 @@ class UserOut(UserBase):
     subscription_tier: str
     scans_used: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class DeleteDataRequest(BaseModel):
     confirm: bool
