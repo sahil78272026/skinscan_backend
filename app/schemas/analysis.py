@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional, Dict
 from datetime import datetime
 from uuid import UUID
@@ -62,5 +62,4 @@ class AnalysisOut(BaseModel):
     consent_photo_given_at: Optional[datetime] = None
     overall_score: Optional[int] = None
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
