@@ -21,9 +21,9 @@ async def create_order(
     current_user: User = Depends(get_current_user)
 ):
     if request.plan_id == "yearly":
-        amount = 8  # ₹800
+        amount = 800  # ₹800
     elif request.plan_id == "lifetime":
-        amount = 12 # ₹1200
+        amount = 1200 # ₹1200
     else:
         raise BadRequestException("Invalid plan ID")
 
